@@ -1,7 +1,15 @@
 package org.anemoi.features;
 
+import org.anemoi.features.server.AnemoiJettyServerImpl;
+
 public class Main {
-    public static void main(String[] args) {
-        System.out.println("Hello world!");
+    public static void main(String[] args) throws Exception{
+        AnemoiJettyServerImpl server = new AnemoiJettyServerImpl(9090);
+        try {
+            server.launch();
+        } catch (Exception e) {
+            e.printStackTrace();
+            server.stop();
+        }
     }
 }
