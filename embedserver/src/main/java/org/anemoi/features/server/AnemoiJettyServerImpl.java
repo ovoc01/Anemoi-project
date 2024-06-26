@@ -37,6 +37,7 @@ public final class AnemoiJettyServerImpl {
 
 
         server.start();
+        server.join();
     }
 
 
