@@ -1,6 +1,6 @@
-package org.anemoi.features.server;
+package org.anemoi.framework.server;
 
-import org.anemoi.features.server.defaultcontroller.DefaultServlet;
+import org.anemoi.framework.server.defaultcontroller.DefaultServlet;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.jsp.JettyJspServlet;

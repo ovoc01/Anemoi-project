@@ -4,7 +4,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.anemoi.features</groupId>
+    <groupId>org.anemoi.framework</groupId>
     <artifactId>embedserver</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -84,7 +84,7 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>${maven.exec.plugin.version}</version>
             <configuration>
-              <mainClass>org.anemoi.features.Main</mainClass>
+              <mainClass>org.anemoi.framework.Main</mainClass>
             </configuration>
           </plugin>
         </plugins>

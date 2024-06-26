@@ -1,6 +1,6 @@
-package org.anemoi.features;
+package org.anemoi.framework;
 
-import org.anemoi.features.server.AnemoiJettyServerImpl;
+import org.anemoi.framework.server.AnemoiJettyServerImpl;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 public class Main {

@@ -1,4 +1,4 @@
-package org.anemoi.features.server;
+package org.anemoi.framework.server;
 
 import org.apache.tomcat.util.scan.StandardJarScanFilter;
 import org.apache.tomcat.util.scan.StandardJarScanner;

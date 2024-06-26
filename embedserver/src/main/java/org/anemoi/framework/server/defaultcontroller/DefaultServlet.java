@@ -1,4 +1,4 @@
-package org.anemoi.features.server.defaultcontroller;
+package org.anemoi.framework.server.defaultcontroller;
 
 import java.io.IOException;
 
