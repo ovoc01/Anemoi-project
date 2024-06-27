@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Define colors for different log levels -->
+    <property name="GREEN" value="\u001b[32m"/>
+    <property name="YELLOW" value="\u001b[33m"/>
+    <property name="RED" value="\u001b[31m"/>
+    <property name="CYAN" value="\u001b[36m"/>
+    <property name="RESET" value="\u001b[0m"/>
+
+    <!-- Console appender configuration -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root logger configuration -->
+    <root level="INFO">
+        <appender-ref ref="console"/>
+    </root>
+
+    <!-- Example of a specific logger configuration -->
+    <logger name="org.springframework" level="INFO"/>
+</configuration>

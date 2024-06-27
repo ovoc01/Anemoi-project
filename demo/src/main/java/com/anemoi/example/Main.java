@@ -1,15 +1,10 @@
 package com.anemoi.example;
 
-import org.anemoi.features.server.AnemoiJettyServerImpl;
+
+import org.anemoi.framework.core.AnemoiFrameworkApplication;
 
 public class Main {
-    public static void main(String[] args) throws Exception{
-        AnemoiJettyServerImpl server = new AnemoiJettyServerImpl(9090);
-        try {
-            server.launch();
-        } catch (Exception e) {
-            e.printStackTrace();
-            server.stop();
-        }
+    public static void main(String[] args) {
+        AnemoiFrameworkApplication.launch(Main.class);
     }
 }

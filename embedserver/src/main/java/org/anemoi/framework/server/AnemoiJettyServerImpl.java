@@ -1,5 +1,6 @@
 package org.anemoi.framework.server;
 
+import jakarta.servlet.http.HttpServlet;
 import org.anemoi.framework.server.defaultcontroller.DefaultServlet;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
@@ -11,6 +12,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,6 +27,7 @@ public final class AnemoiJettyServerImpl {
     private Server server;
     private int port;
     static final String WEB_ROOT_INDEX = "/web/";
+    private static final Logger logger = LoggerFactory.getLogger(AnemoiJettyServerImpl.class);
     
     
     private final  int maxThreads = 200;
@@ -36,7 +40,7 @@ public final class AnemoiJettyServerImpl {
     }
 
 
-    public void launch() throws Exception{
+    public void launch(Class<? extends HttpServlet> mainRequestHandler) throws Exception{
         QueuedThreadPool threadPool = new QueuedThreadPool(maxThreads, minThreads, idleTimeout);
         server = new Server(threadPool);
         ServerConnector connector = new ServerConnector(server);
@@ -58,22 +62,26 @@ public final class AnemoiJettyServerImpl {
 
         
 
-        ServletHolder holderDefault = new ServletHolder("default", DefaultServlet.class);
+        ServletHolder holderDefault = new ServletHolder("default", mainRequestHandler);
         holderDefault.setInitParameter("resourceBase", baseURI.toASCIIString());
         holderDefault.setInitParameter("dirAllowed", "true");
-        servletContextHandler.addServlet(holderDefault, "/");
+        servletContextHandler.addServlet(holderDefault, "/*");
         
 
         server.setHandler(servletContextHandler);
 
 
         server.start();
+
+        logger.info("Application started on port {} ",this.port);
+        logger.info("Waiting for incoming request ");
         server.join();
     }
 
 
     public void stop() throws Exception{
         server.stop();
+        logger.info("Application shutdown");
     }
 
 
