@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 
 public class AnemoiFrameworkApplication {
     private static final Logger logger = LoggerFactory.getLogger(AnemoiFrameworkApplication.class);
-    static String basePackage = null;
+    static public String basePackage = null;
     public static void launch(Class<?> mainApplicationClass) {
         logger.info("Starting anemoi framework ");
         basePackage = mainApplicationClass.getPackageName();

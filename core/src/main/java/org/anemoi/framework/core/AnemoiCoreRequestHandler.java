@@ -23,11 +23,7 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
     @Override
     public void init() throws ServletException{
         holder = (AnemoiContext) getServletContext().getAttribute("applicationContext");
-        try {
-            holder.registerRoute(AnemoiFrameworkApplication.basePackage);
-        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | IOException e) {
-            logger.error("Exception has been thrown",e);
-        }
+
     }
 
 
@@ -52,33 +48,61 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
     }
 
 
-    private void handleIncomingRequest(HttpServletRequest request, HttpServletResponse response)throws ServletException, IOException{
-        RequestInfo requestInfo = extractRequestMapping(request);
-        logger.info("Request info url:{} method:{}",requestInfo.url,requestInfo.httpMethod);
+    private void handleIncomingRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        RequestInfo requestInfo = null;
+        try {
+            requestInfo = extractRequestMapping(request);
 
+            logger.info("Request info {}",requestInfo);
+
+        } catch (NoSuchMethodException e) {
+            logger.error("Error occurs and exception has been thrown ",e);
+        }
     }
 
-    private RequestInfo extractRequestMapping(HttpServletRequest request) {
+    private void handleModelViewRequest(HttpServletRequest request,HttpServletResponse response){
+        //TODO
+    }
+
+    private void handleRestAPIRequest(HttpServletRequest request,HttpServletResponse response){
+        //TODO
+    }
+
+    private void handleGraphQlRequest(HttpServletRequest request,HttpServletResponse response){
+        //TODO
+    }
+
+    private void handleInertiaJsRequest(HttpServletRequest request,HttpServletResponse response){
+        //TODO
+    }
+
+
+    private RequestInfo extractRequestMapping(HttpServletRequest request) throws NoSuchMethodException {
         return RequestInfo.init(request,this.holder);
     }
 
 
-
     @Builder
     @ToString
+    static
     class RequestInfo{
         String url;
         String httpMethod;
         Method method;
         Object declaringClass;
+        String requestHandlerMethodName;
 
-
-        public static RequestInfo init(HttpServletRequest request,AnemoiContext holder){
+        public static RequestInfo init(HttpServletRequest request,AnemoiContext holder) throws NoSuchMethodException {
+            String url = request.getRequestURI();
+            String httpMethod = request.getMethod();
+            Method method = holder.getRouteRegistry().extractMethodFromRoute(httpMethod,url);
+            Object declaringClassInstance = holder.extractBeanInstance(method.getDeclaringClass());
             return RequestInfo
                     .builder()
-                    .url(request.getRequestURI())
-                    .httpMethod(request.getMethod())
-                    .method(holder.getBean(null))
+                    .url(url)
+                    .httpMethod(httpMethod)
+                    .method(method)
+                    .declaringClass(declaringClassInstance)
                     .build();
         }
     }
