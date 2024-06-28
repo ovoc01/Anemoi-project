@@ -1,13 +1,10 @@
 package org.anemoi.framework.core;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.NoArgsConstructor;
-import org.anemoi.framework.core.context.AnemoiContextHolder;
-import org.anemoi.framework.core.route.RouteRegistry;
+import org.anemoi.framework.core.context.AnemoiContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,13 +14,13 @@ import java.lang.reflect.InvocationTargetException;
 
 
 public final class AnemoiCoreRequestHandler extends HttpServlet {
-    private  AnemoiContextHolder holder;
+    private AnemoiContext holder;
     private static final Logger logger = LoggerFactory.getLogger(AnemoiCoreRequestHandler.class);
 
 
     @Override
     public void init() throws ServletException{
-        holder = AnemoiContextHolder.getInstance();
+        holder = (AnemoiContext) getServletContext().getAttribute("applicationContext");
         try {
             holder.registerRoute(AnemoiFrameworkApplication.basePackage);
         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | IOException e) {

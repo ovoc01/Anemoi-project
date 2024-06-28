@@ -1,7 +1,5 @@
 package org.anemoi.framework.core;
 
-import org.anemoi.framework.core.context.AnemoiContextHolder;
-import org.anemoi.framework.core.utils.Utils;
 import org.anemoi.framework.server.AnemoiJettyServerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

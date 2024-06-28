@@ -10,22 +10,21 @@ import java.util.HashMap;
 import java.util.List;
 
 
-public final class AnemoiContextHolder {
-    private static AnemoiContextHolder anemoiContextHolder;
+public final class AnemoiContext {
+
 
     @Getter
     private RouteRegistry routeRegistry;
-    private HashMap<Class<?>, Object> classObjectInstanceHashMap;
+    private HashMap<Class<?>, Object> beans;
 
-    public static AnemoiContextHolder getInstance(){
-        if(anemoiContextHolder==null){
-            anemoiContextHolder = new AnemoiContextHolder();
-            return anemoiContextHolder;
-        }
-        return anemoiContextHolder;
+
+    private void initializeBeansComponent(){
+
     }
 
-
+    public <T> T getBean(Class<T> clazz) {
+        return clazz.cast(beans.get(clazz));
+    }
 
     public void registerRoute(String basePackageName) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, IOException {
         List<Class<?>> classList = Utils.retrieveAllApplicationControllerClass(basePackageName);

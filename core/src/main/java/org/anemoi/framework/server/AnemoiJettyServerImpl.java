@@ -1,6 +1,7 @@
 package org.anemoi.framework.server;
 
 import jakarta.servlet.http.HttpServlet;
+import org.anemoi.framework.server.listener.AnemoiContextListener;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.jsp.JettyJspServlet;
@@ -38,7 +39,7 @@ public final class AnemoiJettyServerImpl {
     }
 
 
-    public void launch(Class<? extends HttpServlet> mainRequestHandler) throws Exception{
+    public void  launch(Class<? extends HttpServlet> mainRequestHandler) throws Exception{
         QueuedThreadPool threadPool = new QueuedThreadPool(maxThreads, minThreads, idleTimeout);
         server = new Server(threadPool);
         ServerConnector connector = new ServerConnector(server);
@@ -52,18 +53,26 @@ public final class AnemoiJettyServerImpl {
 
         // Create Servlet Context
 
+        AnemoiContextListener listener = new AnemoiContextListener();
+
         ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         servletContextHandler.setContextPath("/");
         servletContextHandler.setResourceBase(baseURI.toASCIIString());
 
+        servletContextHandler.addEventListener(listener);
+
         enableEmbeddedJspSupport(servletContextHandler);
+
+
 
         
 
         ServletHolder holderDefault = new ServletHolder("default", mainRequestHandler);
+        holderDefault.setInitOrder(1); // the servlet should be loaded at startup otherwise (0) it will be initialized when the servlet is firstly needed
         holderDefault.setInitParameter("resourceBase", baseURI.toASCIIString());
         holderDefault.setInitParameter("dirAllowed", "true");
         servletContextHandler.addServlet(holderDefault, "/*");
+
         
 
         server.setHandler(servletContextHandler);
@@ -71,8 +80,7 @@ public final class AnemoiJettyServerImpl {
 
         server.start();
 
-        logger.info("Application started on port {} ",this.port);
-        logger.info("Waiting for incoming request ");
+
         server.join();
     }
 

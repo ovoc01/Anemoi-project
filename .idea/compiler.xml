@@ -9,8 +9,10 @@
         <outputRelativeToContentRoot value="true" />
         <module name="core" />
         <module name="demo" />
-        <module name="embedserver" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="embedserver" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>
