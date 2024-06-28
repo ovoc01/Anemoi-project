@@ -6,24 +6,40 @@ import org.anemoi.framework.core.utils.Utils;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
+
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public final class AnemoiContext {
 
-
     @Getter
     private RouteRegistry routeRegistry;
-    private HashMap<Class<?>, Object> beans;
+    private Map<Class<?>, Object> beans = new ConcurrentHashMap<>();
 
 
-    private void initializeBeansComponent(){
+    public AnemoiContext(){
+        initializeRequiredBeansComponent();
+    }
+
+
+    private void initializeRequiredBeansComponent() {
 
     }
 
     public <T> T getBean(Class<T> clazz) {
         return clazz.cast(beans.get(clazz));
+    }
+
+    public Object extractBeanInstance(Class<?> beanClass) throws NoSuchMethodException {
+        Object beanInstance = beans.get(beanClass);
+        if (beanInstance == null) {
+            beanInstance = beanClass.getDeclaredConstructor();
+            beans.put(beanClass, beanInstance);
+            return beanInstance;
+        }
+        return beanInstance;
     }
 
     public void registerRoute(String basePackageName) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, IOException {
