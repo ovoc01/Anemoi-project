@@ -52,10 +52,11 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         RequestInfo requestInfo = null;
         try {
             requestInfo = extractRequestMapping(request);
-
             logger.info("Request info {}",requestInfo);
 
-        } catch (NoSuchMethodException e) {
+        } catch (Exception e) {
+            response.setContentType("application/json");
+            response.getOutputStream().println(e.toString());
             logger.error("Error occurs and exception has been thrown ",e);
         }
     }

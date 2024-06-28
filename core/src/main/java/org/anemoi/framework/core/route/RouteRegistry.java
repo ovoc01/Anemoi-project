@@ -2,6 +2,7 @@ package org.anemoi.framework.core.route;
 
 
 import lombok.Builder;
+import org.anemoi.framework.core.RequestMappingNotFoundException;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -25,6 +26,8 @@ public class RouteRegistry {
     }
 
     public Method extractMethodFromRoute(String httpMethod,String requestMappingUrl){
-        return extractHttpMethodRouteMap(httpMethod).get(requestMappingUrl);
+        Method requiredMethod = extractHttpMethodRouteMap(httpMethod).get(requestMappingUrl);
+        if(requiredMethod == null) throw new RequestMappingNotFoundException(String.format("No mapping found for %s with %s HttpMethod",requestMappingUrl,httpMethod));
+        return requiredMethod;
     }
 }

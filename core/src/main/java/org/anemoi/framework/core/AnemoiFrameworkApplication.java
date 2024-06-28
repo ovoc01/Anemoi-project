@@ -14,7 +14,6 @@ public class AnemoiFrameworkApplication {
         AnemoiJettyServerImpl server = new AnemoiJettyServerImpl(9090);
 
         try {
-
             server.launch(AnemoiCoreRequestHandler.class);
         } catch (Exception e) {
            logger.error("Exception has been thrown",e);
