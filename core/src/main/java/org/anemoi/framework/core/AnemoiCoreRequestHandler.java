@@ -12,10 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 
 
-@NoArgsConstructor
 public final class AnemoiCoreRequestHandler extends HttpServlet {
     private  AnemoiContextHolder holder;
     private static final Logger logger = LoggerFactory.getLogger(AnemoiCoreRequestHandler.class);
@@ -23,11 +23,18 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
 
     @Override
     public void init() throws ServletException{
+        holder = AnemoiContextHolder.getInstance();
+        try {
+            holder.registerRoute(AnemoiFrameworkApplication.basePackage);
+        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | IOException e) {
+            logger.error("Exception has been thrown",e);
+        }
     }
 
-    public AnemoiCoreRequestHandler(AnemoiContextHolder holder) {
-        this.holder = holder;
-    }
+     public AnemoiCoreRequestHandler(){
+
+     }
+
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.getOutputStream().println("<h1>Hello world</h1>");

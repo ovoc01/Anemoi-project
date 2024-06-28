@@ -2,10 +2,7 @@ package com.anemoi.example.controller;
 
 
 import org.anemoi.framework.core.mapping.Controller;
-import org.anemoi.framework.core.mapping.binding.DeleteMapping;
-import org.anemoi.framework.core.mapping.binding.GetMapping;
-import org.anemoi.framework.core.mapping.binding.PostMapping;
-import org.anemoi.framework.core.mapping.binding.PutMapping;
+import org.anemoi.framework.core.mapping.binding.*;
 
 @Controller
 public class TestController {

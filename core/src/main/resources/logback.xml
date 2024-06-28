@@ -22,5 +22,5 @@
     </root>
 
     <!-- Example of a specific logger configuration -->
-    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.anemoi.framework" level="INFO"/>
 </configuration>
