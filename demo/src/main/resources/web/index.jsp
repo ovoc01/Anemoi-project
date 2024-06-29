@@ -8,6 +8,6 @@
     <title>Document</title>
 </head>
 <body>
-        Hello world ${message}
+        Hello world ${nom} ,you are born on ${date}
 </body>
 </html>

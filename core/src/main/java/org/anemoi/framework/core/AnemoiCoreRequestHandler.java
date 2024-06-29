@@ -8,14 +8,27 @@ import lombok.Builder;
 import lombok.ToString;
 import org.anemoi.framework.core.context.AnemoiContext;
 
+import org.anemoi.framework.core.mapping.binding.ReqParam;
 import org.anemoi.framework.core.modelview.ModelView;
+import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.beanutils.converters.DateConverter;
+import org.apache.commons.beanutils.converters.DateTimeConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 public final class AnemoiCoreRequestHandler extends HttpServlet {
@@ -26,6 +39,7 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
     @Override
     public void init() throws ServletException {
         holder = (AnemoiContext) getServletContext().getAttribute("applicationContext");
+
     }
 
 
@@ -56,7 +70,8 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
             requestInfo = extractRequestMapping(request);
             logger.info("Request info {}", requestInfo);
             getClass().getDeclaredMethod(requestInfo.requestHandlerMethodName, RequestInfo.class, HttpServletRequest.class, HttpServletResponse.class).invoke(this, requestInfo, request, response);
-        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException |
+                 InvocationTargetException e) {
             response.setContentType("application/json");
             response.getOutputStream().println(e.toString());
             logger.error("Error occurs and exception has been thrown ", e);
@@ -66,10 +81,24 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
     private void handleModelViewRequest(RequestInfo requestInfo, HttpServletRequest request, HttpServletResponse response) throws InvocationTargetException, IllegalAccessException, ServletException, IOException, NoSuchMethodException {
         logger.info("MVC Request handler called");
         Object instance = requestInfo.declaringClass;
-        ModelView modelView = (ModelView) requestInfo.method.invoke(instance);
-        addAllAttributesToRequest(request,modelView.getData());
+        for (Object param :requestInfo.requestParametersValue){
+            logger.info("param value {}",param.getClass());
+        }
+        ModelView modelView = requestInfo.requestParametersValue.length > 0 ?
+                (ModelView) requestInfo.method.invoke(instance, requestInfo.requestParametersValue) : (ModelView) requestInfo.method.invoke(instance);
+        addAllAttributesToRequest(request, modelView.getData());
         request.getRequestDispatcher(modelView.getView()).forward(request, response);
     }
+
+    private Object[] extractRequestParameterValue(HttpServletRequest request, Parameter[] parameters) {
+        return Arrays.stream(parameters)
+                .map(param -> {
+                    ReqParam reqParam = param.getAnnotation(ReqParam.class);
+                    return request.getParameter(reqParam.value());
+                })
+                .toArray();
+    }
+
 
     private void handleRestAPIRequest(HttpServletRequest request, HttpServletResponse response) {
         //TODO
@@ -88,7 +117,7 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         return RequestInfo.init(request, this.holder);
     }
 
-    private void addAllAttributesToRequest(HttpServletRequest request, Map<String,Object> attributes){
+    private void addAllAttributesToRequest(HttpServletRequest request, Map<String, Object> attributes) {
         attributes.forEach(request::setAttribute);
     }
 
@@ -102,12 +131,23 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         Method method;
         Object declaringClass;
         String requestHandlerMethodName;
+        Object[] requestParametersValue;
 
         public static RequestInfo init(HttpServletRequest request, AnemoiContext holder) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+
             String url = request.getRequestURI();
             String httpMethod = request.getMethod();
             Method method = holder.getRouteRegistry().extractMethodFromRoute(httpMethod, url);
             Object declaringClassInstance = holder.extractBeanInstance(method.getDeclaringClass());
+
+            Object[] requestParameters =  Arrays.stream(method.getParameters())
+                    .filter(parameter -> parameter.isAnnotationPresent(ReqParam.class))
+                    .map(parameter -> {
+                        ReqParam reqParam = parameter.getAnnotation(ReqParam.class);
+                        //System.out.println(request.getParameter(reqParam.value()));
+                        return ConvertUtils.convert(request.getParameter(reqParam.value()),parameter.getType());
+                    }).toArray();
+
             return RequestInfo
                     .builder()
                     .url(url)
@@ -115,7 +155,10 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
                     .method(method)
                     .declaringClass(declaringClassInstance)
                     .requestHandlerMethodName("handleModelViewRequest")
+                    .requestParametersValue(requestParameters)
                     .build();
         }
     }
+
+
 }
