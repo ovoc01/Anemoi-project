@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 
 public final class AnemoiCoreRequestHandler extends HttpServlet {
@@ -66,8 +67,8 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         logger.info("MVC Request handler called");
         Object instance = requestInfo.declaringClass;
         ModelView modelView = (ModelView) requestInfo.method.invoke(instance);
-        System.out.println(modelView);
-        request.getRequestDispatcher("index.jsp").forward(request, response);
+        addAllAttributesToRequest(request,modelView.getData());
+        request.getRequestDispatcher(modelView.getView()).forward(request, response);
     }
 
     private void handleRestAPIRequest(HttpServletRequest request, HttpServletResponse response) {
@@ -85,6 +86,10 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
 
     private RequestInfo extractRequestMapping(HttpServletRequest request) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         return RequestInfo.init(request, this.holder);
+    }
+
+    private void addAllAttributesToRequest(HttpServletRequest request, Map<String,Object> attributes){
+        attributes.forEach(request::setAttribute);
     }
 
 

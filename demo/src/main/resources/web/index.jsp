@@ -8,6 +8,6 @@
     <title>Document</title>
 </head>
 <body>
-        Hello world
+        Hello world ${message}
 </body>
 </html>
