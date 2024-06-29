@@ -32,10 +32,11 @@ public final class AnemoiContext {
         return clazz.cast(beans.get(clazz));
     }
 
-    public Object extractBeanInstance(Class<?> beanClass) throws NoSuchMethodException {
+    public Object extractBeanInstance(Class<?> beanClass) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Object beanInstance = beans.get(beanClass);
         if (beanInstance == null) {
-            beanInstance = beanClass.getDeclaredConstructor();
+
+            beanInstance = beanClass.getDeclaredConstructor().newInstance();
             beans.put(beanClass, beanInstance);
             return beanInstance;
         }

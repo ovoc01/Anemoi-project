@@ -8,6 +8,7 @@ import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -67,11 +68,20 @@ public final class AnemoiJettyServerImpl {
 
         
 
-        ServletHolder holderDefault = new ServletHolder("default", mainRequestHandler);
+        ServletHolder holderDefault = new ServletHolder("default", DefaultServlet.class);
         holderDefault.setInitOrder(1); // the servlet should be loaded at startup otherwise (0) it will be initialized when the servlet is firstly needed
         holderDefault.setInitParameter("resourceBase", baseURI.toASCIIString());
         holderDefault.setInitParameter("dirAllowed", "true");
-        servletContextHandler.addServlet(holderDefault, "/*");
+        holderDefault.setInitParameter("pathInfoOnly","true");
+
+        servletContextHandler.addServlet(holderDefault, "*.js");
+        servletContextHandler.addServlet(holderDefault, "*.css");
+        servletContextHandler.addServlet(holderDefault, "*.html");
+
+        ServletHolder anemoiCoreRequestHandler = new ServletHolder("anemoiCoreRequestHandler",mainRequestHandler);
+
+        servletContextHandler.addServlet(anemoiCoreRequestHandler,"/");
+
 
         
 

@@ -3,30 +3,16 @@ package com.anemoi.example.controller;
 
 import org.anemoi.framework.core.mapping.Controller;
 import org.anemoi.framework.core.mapping.binding.*;
+import org.anemoi.framework.core.modelview.ModelView;
 
 @Controller
 public class TestController {
 
-    @GetMapping("get")
-    public String index(){
-        return null;
+    @GetMapping
+    public ModelView index(){
+        ModelView modelView = new ModelView();
+        modelView.addParameter("message","Bonjour");
+        return modelView.setView("index.jsp");
     }
-
-    @PostMapping("post")
-    public String create(){
-        return null;
-    }
-
-    @PutMapping("put")
-    public String update(){
-        return null;
-    }
-
-    @DeleteMapping("delete")
-    public String delete(){
-        return null;
-    }
-
-
 
 }

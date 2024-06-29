@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.Builder;
 import lombok.ToString;
 import org.anemoi.framework.core.context.AnemoiContext;
+
+import org.anemoi.framework.core.modelview.ModelView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,15 +23,14 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
 
 
     @Override
-    public void init() throws ServletException{
+    public void init() throws ServletException {
         holder = (AnemoiContext) getServletContext().getAttribute("applicationContext");
-
     }
 
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        handleIncomingRequest(request,response);
+        handleIncomingRequest(request, response);
     }
 
     @Override
@@ -52,51 +53,55 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         RequestInfo requestInfo = null;
         try {
             requestInfo = extractRequestMapping(request);
-            logger.info("Request info {}",requestInfo);
-
-        } catch (Exception e) {
+            logger.info("Request info {}", requestInfo);
+            getClass().getDeclaredMethod(requestInfo.requestHandlerMethodName, RequestInfo.class, HttpServletRequest.class, HttpServletResponse.class).invoke(this, requestInfo, request, response);
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             response.setContentType("application/json");
             response.getOutputStream().println(e.toString());
-            logger.error("Error occurs and exception has been thrown ",e);
+            logger.error("Error occurs and exception has been thrown ", e);
         }
     }
 
-    private void handleModelViewRequest(HttpServletRequest request,HttpServletResponse response){
+    private void handleModelViewRequest(RequestInfo requestInfo, HttpServletRequest request, HttpServletResponse response) throws InvocationTargetException, IllegalAccessException, ServletException, IOException, NoSuchMethodException {
+        logger.info("MVC Request handler called");
+        Object instance = requestInfo.declaringClass;
+        ModelView modelView = (ModelView) requestInfo.method.invoke(instance);
+        System.out.println(modelView);
+        request.getRequestDispatcher("index.jsp").forward(request, response);
+    }
+
+    private void handleRestAPIRequest(HttpServletRequest request, HttpServletResponse response) {
         //TODO
     }
 
-    private void handleRestAPIRequest(HttpServletRequest request,HttpServletResponse response){
+    private void handleGraphQlRequest(HttpServletRequest request, HttpServletResponse response) {
         //TODO
     }
 
-    private void handleGraphQlRequest(HttpServletRequest request,HttpServletResponse response){
-        //TODO
-    }
-
-    private void handleInertiaJsRequest(HttpServletRequest request,HttpServletResponse response){
+    private void handleInertiaJsRequest(HttpServletRequest request, HttpServletResponse response) {
         //TODO
     }
 
 
-    private RequestInfo extractRequestMapping(HttpServletRequest request) throws NoSuchMethodException {
-        return RequestInfo.init(request,this.holder);
+    private RequestInfo extractRequestMapping(HttpServletRequest request) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        return RequestInfo.init(request, this.holder);
     }
 
 
     @Builder
     @ToString
     static
-    class RequestInfo{
+    class RequestInfo {
         String url;
         String httpMethod;
         Method method;
         Object declaringClass;
         String requestHandlerMethodName;
 
-        public static RequestInfo init(HttpServletRequest request,AnemoiContext holder) throws NoSuchMethodException {
+        public static RequestInfo init(HttpServletRequest request, AnemoiContext holder) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
             String url = request.getRequestURI();
             String httpMethod = request.getMethod();
-            Method method = holder.getRouteRegistry().extractMethodFromRoute(httpMethod,url);
+            Method method = holder.getRouteRegistry().extractMethodFromRoute(httpMethod, url);
             Object declaringClassInstance = holder.extractBeanInstance(method.getDeclaringClass());
             return RequestInfo
                     .builder()
@@ -104,6 +109,7 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
                     .httpMethod(httpMethod)
                     .method(method)
                     .declaringClass(declaringClassInstance)
+                    .requestHandlerMethodName("handleModelViewRequest")
                     .build();
         }
     }
