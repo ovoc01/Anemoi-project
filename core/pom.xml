@@ -60,6 +60,14 @@
             <type>pom</type>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+
+
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-client</artifactId>

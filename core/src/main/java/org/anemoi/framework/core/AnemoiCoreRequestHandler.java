@@ -8,13 +8,20 @@ import lombok.Builder;
 import lombok.ToString;
 import org.anemoi.framework.core.context.AnemoiContext;
 
+import org.anemoi.framework.core.mapping.binding.ReqParam;
+import org.anemoi.framework.core.mapping.binding.ToObject;
 import org.anemoi.framework.core.modelview.ModelView;
+import org.apache.commons.beanutils.ConvertUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+
+import java.util.Arrays;
+import java.util.Map;
 
 
 public final class AnemoiCoreRequestHandler extends HttpServlet {
@@ -25,6 +32,7 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
     @Override
     public void init() throws ServletException {
         holder = (AnemoiContext) getServletContext().getAttribute("applicationContext");
+
     }
 
 
@@ -55,7 +63,8 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
             requestInfo = extractRequestMapping(request);
             logger.info("Request info {}", requestInfo);
             getClass().getDeclaredMethod(requestInfo.requestHandlerMethodName, RequestInfo.class, HttpServletRequest.class, HttpServletResponse.class).invoke(this, requestInfo, request, response);
-        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException |
+                 InvocationTargetException e) {
             response.setContentType("application/json");
             response.getOutputStream().println(e.toString());
             logger.error("Error occurs and exception has been thrown ", e);
@@ -65,10 +74,24 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
     private void handleModelViewRequest(RequestInfo requestInfo, HttpServletRequest request, HttpServletResponse response) throws InvocationTargetException, IllegalAccessException, ServletException, IOException, NoSuchMethodException {
         logger.info("MVC Request handler called");
         Object instance = requestInfo.declaringClass;
-        ModelView modelView = (ModelView) requestInfo.method.invoke(instance);
-        System.out.println(modelView);
-        request.getRequestDispatcher("index.jsp").forward(request, response);
+        for (Object param :requestInfo.requestParametersValue){
+            logger.info("param value {}",param.getClass());
+        }
+        ModelView modelView = requestInfo.requestParametersValue.length > 0 ?
+                (ModelView) requestInfo.method.invoke(instance, requestInfo.requestParametersValue) : (ModelView) requestInfo.method.invoke(instance);
+        addAllAttributesToRequest(request, modelView.getData());
+        request.getRequestDispatcher(modelView.getView()).forward(request, response);
     }
+
+    private Object[] extractRequestParameterValue(HttpServletRequest request, Parameter[] parameters) {
+        return Arrays.stream(parameters)
+                .map(param -> {
+                    ReqParam reqParam = param.getAnnotation(ReqParam.class);
+                    return request.getParameter(reqParam.value());
+                })
+                .toArray();
+    }
+
 
     private void handleRestAPIRequest(HttpServletRequest request, HttpServletResponse response) {
         //TODO
@@ -87,6 +110,10 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         return RequestInfo.init(request, this.holder);
     }
 
+    private void addAllAttributesToRequest(HttpServletRequest request, Map<String, Object> attributes) {
+        attributes.forEach(request::setAttribute);
+    }
+
 
     @Builder
     @ToString
@@ -97,12 +124,33 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         Method method;
         Object declaringClass;
         String requestHandlerMethodName;
+        Object[] requestParametersValue;
 
         public static RequestInfo init(HttpServletRequest request, AnemoiContext holder) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+
             String url = request.getRequestURI();
             String httpMethod = request.getMethod();
             Method method = holder.getRouteRegistry().extractMethodFromRoute(httpMethod, url);
             Object declaringClassInstance = holder.extractBeanInstance(method.getDeclaringClass());
+
+            Object[] requestParameters = Arrays.stream(method.getParameters())
+                    .map(parameter -> {
+                        if (parameter.isAnnotationPresent(ReqParam.class)) {
+                            ReqParam reqParam = parameter.getAnnotation(ReqParam.class);
+                            String paramValue = request.getParameter(reqParam.value());
+                            return paramValue != null ? ConvertUtils.convert(paramValue, parameter.getType()) : null;
+                        } else if (parameter.isAnnotationPresent(ToObject.class)) {
+                            try {
+                                return requestParamToObject(request, parameter.getType());
+                            } catch (NoSuchMethodException | InvocationTargetException | InstantiationException |
+                                     IllegalAccessException e) {
+                                throw new RuntimeException(e);
+                            }
+                        } else {
+                            return null;
+                        }
+                    }).toArray();
+
             return RequestInfo
                     .builder()
                     .url(url)
@@ -110,7 +158,28 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
                     .method(method)
                     .declaringClass(declaringClassInstance)
                     .requestHandlerMethodName("handleModelViewRequest")
+                    .requestParametersValue(requestParameters)
                     .build();
         }
     }
+
+
+    private static Object requestParamToObject(HttpServletRequest request,Class<?> object) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        Object obj = object.getDeclaredConstructor().newInstance();
+        Arrays.stream(obj.getClass().getDeclaredFields()).map(field -> {
+            field.setAccessible(true);
+            try {
+                field.set(obj,ConvertUtils.convert(request.getParameter(field.getName()),field.getType()));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
+        return obj;
+    }
+
+
+
+
+
 }
