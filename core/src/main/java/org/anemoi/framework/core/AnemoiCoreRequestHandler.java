@@ -9,10 +9,9 @@ import lombok.ToString;
 import org.anemoi.framework.core.context.AnemoiContext;
 
 import org.anemoi.framework.core.mapping.binding.ReqParam;
+import org.anemoi.framework.core.mapping.binding.ToObject;
 import org.anemoi.framework.core.modelview.ModelView;
 import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.beanutils.converters.DateConverter;
-import org.apache.commons.beanutils.converters.DateTimeConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,15 +19,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 public final class AnemoiCoreRequestHandler extends HttpServlet {
@@ -140,12 +133,22 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
             Method method = holder.getRouteRegistry().extractMethodFromRoute(httpMethod, url);
             Object declaringClassInstance = holder.extractBeanInstance(method.getDeclaringClass());
 
-            Object[] requestParameters =  Arrays.stream(method.getParameters())
-                    .filter(parameter -> parameter.isAnnotationPresent(ReqParam.class))
+            Object[] requestParameters = Arrays.stream(method.getParameters())
                     .map(parameter -> {
-                        ReqParam reqParam = parameter.getAnnotation(ReqParam.class);
-                        //System.out.println(request.getParameter(reqParam.value()));
-                        return ConvertUtils.convert(request.getParameter(reqParam.value()),parameter.getType());
+                        if (parameter.isAnnotationPresent(ReqParam.class)) {
+                            ReqParam reqParam = parameter.getAnnotation(ReqParam.class);
+                            String paramValue = request.getParameter(reqParam.value());
+                            return paramValue != null ? ConvertUtils.convert(paramValue, parameter.getType()) : null;
+                        } else if (parameter.isAnnotationPresent(ToObject.class)) {
+                            try {
+                                return requestParamToObject(request, parameter.getType());
+                            } catch (NoSuchMethodException | InvocationTargetException | InstantiationException |
+                                     IllegalAccessException e) {
+                                throw new RuntimeException(e);
+                            }
+                        } else {
+                            return null;
+                        }
                     }).toArray();
 
             return RequestInfo
@@ -159,6 +162,24 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
                     .build();
         }
     }
+
+
+    private static Object requestParamToObject(HttpServletRequest request,Class<?> object) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        Object obj = object.getDeclaredConstructor().newInstance();
+        Arrays.stream(obj.getClass().getDeclaredFields()).map(field -> {
+            field.setAccessible(true);
+            try {
+                field.set(obj,ConvertUtils.convert(request.getParameter(field.getName()),field.getType()));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
+        return obj;
+    }
+
+
+
 
 
 }

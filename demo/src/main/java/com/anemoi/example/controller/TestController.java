@@ -1,6 +1,7 @@
 package com.anemoi.example.controller;
 
 
+import com.anemoi.example.Person;
 import org.anemoi.framework.core.mapping.Controller;
 import org.anemoi.framework.core.mapping.binding.*;
 import org.anemoi.framework.core.modelview.ModelView;
@@ -18,10 +19,11 @@ public class TestController {
     }
 
     @GetMapping("params")
-    public ModelView testingRequestParam(@ReqParam("date") Date date, @ReqParam("nom") String nom){
+    public ModelView testingRequestParam(@ReqParam("dateOfBirth") Date date, @ReqParam("name") String nom,@ToObject Person person){
         ModelView modelView = new ModelView();
         modelView.addParameter("date",date);
         modelView.addParameter("nom",nom);
+        System.out.println(person);
         return modelView.setView("index.jsp");
     }
 
