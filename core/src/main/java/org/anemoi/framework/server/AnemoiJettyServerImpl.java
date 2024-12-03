@@ -12,6 +12,7 @@ import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,14 +26,10 @@ import java.net.URLClassLoader;
 
 public final class AnemoiJettyServerImpl {
     private Server server;
-    private int port;
+    private final int port;
     static final String WEB_ROOT_INDEX = "/web/";
     private static final Logger logger = LoggerFactory.getLogger(AnemoiJettyServerImpl.class);
-    
-    
-    private final  int maxThreads = 200;
-    private final int minThreads = 10;
-    private final int idleTimeout = 120;
+
 
     public AnemoiJettyServerImpl(int port) {
         this.port = port;
@@ -40,7 +37,12 @@ public final class AnemoiJettyServerImpl {
     }
 
 
-    public void  launch(Class<? extends HttpServlet> mainRequestHandler) throws Exception{
+    public void launch(Class<? extends HttpServlet> mainRequestHandler) throws Exception {
+        int minThreads = 10;
+        int maxThreads = 200;
+        int idleTimeout = 120;
+
+
         QueuedThreadPool threadPool = new QueuedThreadPool(maxThreads, minThreads, idleTimeout);
         server = new Server(threadPool);
         ServerConnector connector = new ServerConnector(server);
@@ -49,7 +51,7 @@ public final class AnemoiJettyServerImpl {
 
 
         // Create URI for Servlet Context
-        URI  baseURI = getWebRootResourceURI();
+        URI baseURI = getWebRootResourceURI();
 
 
         // Create Servlet Context
@@ -65,26 +67,24 @@ public final class AnemoiJettyServerImpl {
         enableEmbeddedJspSupport(servletContextHandler);
 
 
-
-        
-
         ServletHolder holderDefault = new ServletHolder("default", DefaultServlet.class);
-        holderDefault.setInitOrder(1); // the servlet should be loaded at startup otherwise (0) it will be initialized when the servlet is firstly needed
+        holderDefault.setInitOrder(1); // the servlet should be loaded at startup otherwise (0 or less) it will be initialized when the servlet is firstly needed
         holderDefault.setInitParameter("resourceBase", baseURI.toASCIIString());
         holderDefault.setInitParameter("dirAllowed", "true");
-        holderDefault.setInitParameter("pathInfoOnly","true");
+        holderDefault.setInitParameter("pathInfoOnly", "true");
 
-        servletContextHandler.addServlet(holderDefault, "*.js");
-        servletContextHandler.addServlet(holderDefault, "*.css");
-        servletContextHandler.addServlet(holderDefault, "*.html");
-
-        ServletHolder anemoiCoreRequestHandler = new ServletHolder("anemoiCoreRequestHandler",mainRequestHandler);
-
-        servletContextHandler.addServlet(anemoiCoreRequestHandler,"/");
+        //servletContextHandler.addServlet(holderDefault, "*.css");
+        servletContextHandler.addServlet(holderDefault, "/");
 
 
-        
+        //servletContextHandler.addServlet(holderDefault, "/css/*");
 
+        ServletHolder anemoiCoreRequestHandler = new ServletHolder("anemoiCoreRequestHandler", mainRequestHandler);
+
+        servletContextHandler.addServlet(anemoiCoreRequestHandler, "*.ctl");
+
+
+        servletContextHandler.setWelcomeFiles(new String[]{"index.jsp", "index.html"});
         server.setHandler(servletContextHandler);
 
 
@@ -95,29 +95,27 @@ public final class AnemoiJettyServerImpl {
     }
 
 
-    public void stop() throws Exception{
+    public void stop() throws Exception {
         server.stop();
         logger.info("Application shutdown");
     }
 
 
-    private URI getWebRootResourceURI() throws FileNotFoundException, URISyntaxException{
+    private URI getWebRootResourceURI() throws FileNotFoundException, URISyntaxException {
         URL indexURI = this.getClass().getResource(WEB_ROOT_INDEX);
-        if(indexURI == null){
+        if (indexURI == null) {
             throw new FileNotFoundException(" web directory not found in the resources , please create the directory!");
         }
         return indexURI.toURI();
     }
 
-    private void enableEmbeddedJspSupport(ServletContextHandler servletContextHandler) throws IOException{
-            // Establish Scratch directory for the servlet context (used by JSP compilation)
+    private void enableEmbeddedJspSupport(ServletContextHandler servletContextHandler) throws IOException {
+        // Establish Scratch directory for the servlet context (used by JSP compilation)
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
         File scratchDir = new File(tempDir.toString(), "embedded-jetty-jsp");
-
-        if (!scratchDir.exists())
-        {
-            if (!scratchDir.mkdirs())
-            {
+        logger.info("jsp scratch dir {}", scratchDir.getPath());
+        if (!scratchDir.exists()) {
+            if (!scratchDir.mkdirs()) {
                 throw new IOException("Unable to create scratch directory: " + scratchDir);
             }
         }
@@ -145,8 +143,9 @@ public final class AnemoiJettyServerImpl {
         holderJsp.setInitParameter("keepgenerated", "true");
         servletContextHandler.addServlet(holderJsp, "*.jsp");
 
+
         servletContextHandler.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
     }
 
-    
+
 }

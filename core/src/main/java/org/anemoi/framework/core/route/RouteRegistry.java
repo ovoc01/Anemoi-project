@@ -2,7 +2,7 @@ package org.anemoi.framework.core.route;
 
 
 import lombok.Builder;
-import org.anemoi.framework.core.RequestMappingNotFoundException;
+import org.anemoi.framework.core.exception.RequestMappingNotFoundException;
 
 import java.lang.reflect.Method;
 import java.util.Map;

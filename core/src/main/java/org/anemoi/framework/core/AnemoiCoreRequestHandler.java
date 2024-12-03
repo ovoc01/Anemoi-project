@@ -27,6 +27,7 @@ import java.util.Map;
 public final class AnemoiCoreRequestHandler extends HttpServlet {
     AnemoiContext holder;
     private static final Logger logger = LoggerFactory.getLogger(AnemoiCoreRequestHandler.class);
+    private static final String CONTROLLER_EXTENSION = ".ctl";
 
 
     @Override
@@ -114,7 +115,6 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         attributes.forEach(request::setAttribute);
     }
 
-
     @Builder
     @ToString
     static
@@ -177,8 +177,6 @@ public final class AnemoiCoreRequestHandler extends HttpServlet {
         });
         return obj;
     }
-
-
 
 
 

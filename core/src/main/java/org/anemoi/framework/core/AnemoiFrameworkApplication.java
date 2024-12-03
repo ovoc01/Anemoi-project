@@ -18,7 +18,5 @@ public class AnemoiFrameworkApplication {
         } catch (Exception e) {
            logger.error("Exception has been thrown",e);
         }
-
-
     }
 }

@@ -1,4 +1,4 @@
-package org.anemoi.framework.core;
+package org.anemoi.framework.core.exception;
 
 public class RequestMappingNotFoundException extends IllegalArgumentException {
     String message ;

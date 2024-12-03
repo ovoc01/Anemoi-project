@@ -18,12 +18,11 @@ public class TestController {
         return modelView.setView("index.jsp");
     }
 
-    @GetMapping("params")
+    @GetMapping("params.ctl")
     public ModelView testingRequestParam(@ReqParam("dateOfBirth") Date date, @ReqParam("name") String nom,@ToObject Person person){
         ModelView modelView = new ModelView();
         modelView.addParameter("date",date);
         modelView.addParameter("nom",nom);
-        System.out.println(person);
         return modelView.setView("index.jsp");
     }
 
